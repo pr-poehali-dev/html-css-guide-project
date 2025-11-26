@@ -1,184 +1,12 @@
-import { useState, useMemo } from 'react';
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-
-const htmlTags = [
-  { name: '<html>', description: 'Корневой элемент HTML-документа', example: '<html>\n  <head>...</head>\n  <body>...</body>\n</html>', category: 'Структура' },
-  { name: '<head>', description: 'Контейнер для метаданных документа', example: '<head>\n  <title>Заголовок</title>\n</head>', category: 'Структура' },
-  { name: '<body>', description: 'Основное содержимое документа', example: '<body>\n  <h1>Контент</h1>\n</body>', category: 'Структура' },
-  { name: '<title>', description: 'Заголовок документа в браузере', example: '<title>Название страницы</title>', category: 'Структура' },
-  { name: '<meta>', description: 'Метаданные страницы', example: '<meta charset="UTF-8">', category: 'Структура' },
-  { name: '<link>', description: 'Подключение внешних ресурсов', example: '<link rel="stylesheet" href="style.css">', category: 'Структура' },
-  { name: '<div>', description: 'Контейнер для группировки элементов', example: '<div class="container">\n  <p>Содержимое</p>\n</div>', category: 'Структура' },
-  { name: '<span>', description: 'Строчный контейнер для стилизации текста', example: '<span style="color: red;">Красный текст</span>', category: 'Структура' },
-  { name: '<header>', description: 'Шапка страницы или секции', example: '<header>\n  <h1>Заголовок сайта</h1>\n</header>', category: 'Структура' },
-  { name: '<nav>', description: 'Навигационное меню', example: '<nav>\n  <a href="#home">Главная</a>\n</nav>', category: 'Структура' },
-  { name: '<main>', description: 'Основное содержимое страницы', example: '<main>\n  <article>...</article>\n</main>', category: 'Структура' },
-  { name: '<footer>', description: 'Подвал страницы', example: '<footer>\n  <p>&copy; 2024</p>\n</footer>', category: 'Структура' },
-  { name: '<section>', description: 'Тематическая секция контента', example: '<section>\n  <h2>Раздел</h2>\n</section>', category: 'Структура' },
-  { name: '<article>', description: 'Независимый блок контента', example: '<article>\n  <h2>Статья</h2>\n</article>', category: 'Структура' },
-  { name: '<aside>', description: 'Боковая панель или дополнительный контент', example: '<aside>\n  <p>Дополнительная информация</p>\n</aside>', category: 'Структура' },
-  
-  { name: '<h1> - <h6>', description: 'Заголовки разных уровней', example: '<h1>Главный заголовок</h1>\n<h2>Подзаголовок</h2>', category: 'Текст' },
-  { name: '<p>', description: 'Параграф текста', example: '<p>Это параграф текста.</p>', category: 'Текст' },
-  { name: '<strong>', description: 'Жирный текст (важный)', example: '<strong>Важный текст</strong>', category: 'Текст' },
-  { name: '<em>', description: 'Курсивный текст (выделенный)', example: '<em>Выделенный текст</em>', category: 'Текст' },
-  { name: '<b>', description: 'Жирный текст (визуальный)', example: '<b>Жирный</b>', category: 'Текст' },
-  { name: '<i>', description: 'Курсивный текст (визуальный)', example: '<i>Курсив</i>', category: 'Текст' },
-  { name: '<u>', description: 'Подчеркнутый текст', example: '<u>Подчеркнутый</u>', category: 'Текст' },
-  { name: '<mark>', description: 'Выделенный текст (маркер)', example: '<mark>Важное</mark>', category: 'Текст' },
-  { name: '<small>', description: 'Мелкий текст', example: '<small>Мелкий текст</small>', category: 'Текст' },
-  { name: '<del>', description: 'Зачеркнутый текст', example: '<del>Удаленный текст</del>', category: 'Текст' },
-  { name: '<ins>', description: 'Добавленный текст', example: '<ins>Новый текст</ins>', category: 'Текст' },
-  { name: '<sub>', description: 'Подстрочный текст', example: 'H<sub>2</sub>O', category: 'Текст' },
-  { name: '<sup>', description: 'Надстрочный текст', example: 'x<sup>2</sup>', category: 'Текст' },
-  { name: '<br>', description: 'Перенос строки', example: 'Первая строка<br>Вторая строка', category: 'Текст' },
-  { name: '<hr>', description: 'Горизонтальная линия', example: '<hr>', category: 'Текст' },
-  { name: '<blockquote>', description: 'Блок цитаты', example: '<blockquote>Цитата</blockquote>', category: 'Текст' },
-  { name: '<pre>', description: 'Предформатированный текст', example: '<pre>Код с\n  форматированием</pre>', category: 'Текст' },
-  { name: '<code>', description: 'Фрагмент кода', example: '<code>console.log()</code>', category: 'Текст' },
-  
-  { name: '<a>', description: 'Ссылка на другую страницу или ресурс', example: '<a href="https://example.com">Ссылка</a>', category: 'Ссылки' },
-  
-  { name: '<img>', description: 'Вставка изображения', example: '<img src="image.jpg" alt="Описание">', category: 'Медиа' },
-  { name: '<audio>', description: 'Аудиоплеер', example: '<audio controls>\n  <source src="audio.mp3">\n</audio>', category: 'Медиа' },
-  { name: '<video>', description: 'Видеоплеер', example: '<video controls>\n  <source src="video.mp4">\n</video>', category: 'Медиа' },
-  { name: '<iframe>', description: 'Встраивание внешней страницы', example: '<iframe src="https://example.com"></iframe>', category: 'Медиа' },
-  { name: '<canvas>', description: 'Холст для рисования', example: '<canvas id="myCanvas"></canvas>', category: 'Медиа' },
-  { name: '<svg>', description: 'Векторная графика', example: '<svg width="100" height="100">\n  <circle cx="50" cy="50" r="40"/>\n</svg>', category: 'Медиа' },
-  
-  { name: '<form>', description: 'HTML-форма для ввода данных', example: '<form action="/submit">\n  <input type="text">\n</form>', category: 'Формы' },
-  { name: '<input>', description: 'Поле ввода данных', example: '<input type="text" placeholder="Введите текст">', category: 'Формы' },
-  { name: '<textarea>', description: 'Многострочное текстовое поле', example: '<textarea rows="4"></textarea>', category: 'Формы' },
-  { name: '<button>', description: 'Кнопка для взаимодействия', example: '<button type="submit">Отправить</button>', category: 'Формы' },
-  { name: '<select>', description: 'Выпадающий список', example: '<select>\n  <option>Вариант 1</option>\n</select>', category: 'Формы' },
-  { name: '<option>', description: 'Вариант в выпадающем списке', example: '<option value="1">Вариант 1</option>', category: 'Формы' },
-  { name: '<label>', description: 'Подпись для элемента формы', example: '<label for="name">Имя:</label>\n<input id="name">', category: 'Формы' },
-  { name: '<fieldset>', description: 'Группировка элементов формы', example: '<fieldset>\n  <legend>Группа</legend>\n</fieldset>', category: 'Формы' },
-  { name: '<legend>', description: 'Заголовок для fieldset', example: '<legend>Заголовок группы</legend>', category: 'Формы' },
-  
-  { name: '<ul>', description: 'Ненумерованный список', example: '<ul>\n  <li>Пункт 1</li>\n  <li>Пункт 2</li>\n</ul>', category: 'Списки' },
-  { name: '<ol>', description: 'Нумерованный список', example: '<ol>\n  <li>Первый</li>\n  <li>Второй</li>\n</ol>', category: 'Списки' },
-  { name: '<li>', description: 'Элемент списка', example: '<li>Пункт списка</li>', category: 'Списки' },
-  { name: '<dl>', description: 'Список определений', example: '<dl>\n  <dt>Термин</dt>\n  <dd>Определение</dd>\n</dl>', category: 'Списки' },
-  { name: '<dt>', description: 'Термин в списке определений', example: '<dt>HTML</dt>', category: 'Списки' },
-  { name: '<dd>', description: 'Определение термина', example: '<dd>Язык разметки</dd>', category: 'Списки' },
-  
-  { name: '<table>', description: 'Таблица данных', example: '<table>\n  <tr>\n    <td>Ячейка</td>\n  </tr>\n</table>', category: 'Таблицы' },
-  { name: '<tr>', description: 'Строка таблицы', example: '<tr>\n  <td>Данные</td>\n</tr>', category: 'Таблицы' },
-  { name: '<td>', description: 'Ячейка таблицы', example: '<td>Содержимое ячейки</td>', category: 'Таблицы' },
-  { name: '<th>', description: 'Заголовочная ячейка', example: '<th>Заголовок</th>', category: 'Таблицы' },
-  { name: '<thead>', description: 'Шапка таблицы', example: '<thead>\n  <tr><th>Колонка</th></tr>\n</thead>', category: 'Таблицы' },
-  { name: '<tbody>', description: 'Тело таблицы', example: '<tbody>\n  <tr><td>Данные</td></tr>\n</tbody>', category: 'Таблицы' },
-  { name: '<tfoot>', description: 'Подвал таблицы', example: '<tfoot>\n  <tr><td>Итого</td></tr>\n</tfoot>', category: 'Таблицы' },
-  
-  { name: '<script>', description: 'JavaScript код', example: '<script>\n  console.log("Hello");\n</script>', category: 'Скрипты' },
-  { name: '<style>', description: 'CSS стили', example: '<style>\n  body { color: red; }\n</style>', category: 'Стили' },
-];
-
-const cssProperties = [
-  { name: 'color', description: 'Устанавливает цвет текста', example: 'color: #9b87f5;', values: 'Цвет (hex, rgb, название)', category: 'Цвет и фон' },
-  { name: 'background', description: 'Задает фон элемента (универсальное)', example: 'background: #1e1b2e;', values: 'Цвет, градиент, изображение', category: 'Цвет и фон' },
-  { name: 'background-color', description: 'Цвет фона элемента', example: 'background-color: #9b87f5;', values: 'Цвет', category: 'Цвет и фон' },
-  { name: 'background-image', description: 'Фоновое изображение', example: 'background-image: url("bg.jpg");', values: 'URL изображения', category: 'Цвет и фон' },
-  { name: 'background-size', description: 'Размер фонового изображения', example: 'background-size: cover;', values: 'cover, contain, размер', category: 'Цвет и фон' },
-  { name: 'background-position', description: 'Позиция фонового изображения', example: 'background-position: center;', values: 'center, top, bottom, left, right', category: 'Цвет и фон' },
-  { name: 'background-repeat', description: 'Повтор фонового изображения', example: 'background-repeat: no-repeat;', values: 'repeat, no-repeat, repeat-x, repeat-y', category: 'Цвет и фон' },
-  { name: 'opacity', description: 'Прозрачность элемента', example: 'opacity: 0.5;', values: '0 (прозрачный) до 1 (непрозрачный)', category: 'Цвет и фон' },
-  
-  { name: 'font-family', description: 'Семейство шрифтов', example: 'font-family: Arial, sans-serif;', values: 'Название шрифта', category: 'Текст' },
-  { name: 'font-size', description: 'Размер шрифта', example: 'font-size: 16px;', values: 'px, em, rem, %', category: 'Текст' },
-  { name: 'font-weight', description: 'Жирность шрифта', example: 'font-weight: bold;', values: 'normal, bold, 100-900', category: 'Текст' },
-  { name: 'font-style', description: 'Стиль шрифта', example: 'font-style: italic;', values: 'normal, italic, oblique', category: 'Текст' },
-  { name: 'text-align', description: 'Выравнивание текста', example: 'text-align: center;', values: 'left, right, center, justify', category: 'Текст' },
-  { name: 'text-decoration', description: 'Оформление текста', example: 'text-decoration: underline;', values: 'none, underline, line-through', category: 'Текст' },
-  { name: 'text-transform', description: 'Преобразование регистра', example: 'text-transform: uppercase;', values: 'uppercase, lowercase, capitalize', category: 'Текст' },
-  { name: 'line-height', description: 'Высота строки', example: 'line-height: 1.5;', values: 'Число или размер', category: 'Текст' },
-  { name: 'letter-spacing', description: 'Расстояние между буквами', example: 'letter-spacing: 2px;', values: 'Размер', category: 'Текст' },
-  { name: 'word-spacing', description: 'Расстояние между словами', example: 'word-spacing: 5px;', values: 'Размер', category: 'Текст' },
-  { name: 'text-shadow', description: 'Тень текста', example: 'text-shadow: 2px 2px 4px rgba(0,0,0,0.5);', values: 'x y blur color', category: 'Текст' },
-  
-  { name: 'width', description: 'Ширина элемента', example: 'width: 300px;', values: 'px, %, vh, vw, auto', category: 'Размеры' },
-  { name: 'height', description: 'Высота элемента', example: 'height: 200px;', values: 'px, %, vh, vw, auto', category: 'Размеры' },
-  { name: 'min-width', description: 'Минимальная ширина', example: 'min-width: 200px;', values: 'Размер', category: 'Размеры' },
-  { name: 'max-width', description: 'Максимальная ширина', example: 'max-width: 1200px;', values: 'Размер', category: 'Размеры' },
-  { name: 'min-height', description: 'Минимальная высота', example: 'min-height: 100px;', values: 'Размер', category: 'Размеры' },
-  { name: 'max-height', description: 'Максимальная высота', example: 'max-height: 500px;', values: 'Размер', category: 'Размеры' },
-  
-  { name: 'margin', description: 'Внешние отступы (универсальное)', example: 'margin: 20px;', values: 'Размер', category: 'Отступы' },
-  { name: 'margin-top', description: 'Верхний внешний отступ', example: 'margin-top: 10px;', values: 'Размер', category: 'Отступы' },
-  { name: 'margin-right', description: 'Правый внешний отступ', example: 'margin-right: 15px;', values: 'Размер', category: 'Отступы' },
-  { name: 'margin-bottom', description: 'Нижний внешний отступ', example: 'margin-bottom: 10px;', values: 'Размер', category: 'Отступы' },
-  { name: 'margin-left', description: 'Левый внешний отступ', example: 'margin-left: 15px;', values: 'Размер', category: 'Отступы' },
-  { name: 'padding', description: 'Внутренние отступы (универсальное)', example: 'padding: 15px;', values: 'Размер', category: 'Отступы' },
-  { name: 'padding-top', description: 'Верхний внутренний отступ', example: 'padding-top: 10px;', values: 'Размер', category: 'Отступы' },
-  { name: 'padding-right', description: 'Правый внутренний отступ', example: 'padding-right: 20px;', values: 'Размер', category: 'Отступы' },
-  { name: 'padding-bottom', description: 'Нижний внутренний отступ', example: 'padding-bottom: 10px;', values: 'Размер', category: 'Отступы' },
-  { name: 'padding-left', description: 'Левый внутренний отступ', example: 'padding-left: 20px;', values: 'Размер', category: 'Отступы' },
-  
-  { name: 'border', description: 'Граница элемента (универсальное)', example: 'border: 2px solid #9b87f5;', values: 'Толщина стиль цвет', category: 'Граница' },
-  { name: 'border-width', description: 'Толщина границы', example: 'border-width: 3px;', values: 'Размер', category: 'Граница' },
-  { name: 'border-style', description: 'Стиль границы', example: 'border-style: solid;', values: 'solid, dashed, dotted, double', category: 'Граница' },
-  { name: 'border-color', description: 'Цвет границы', example: 'border-color: #9b87f5;', values: 'Цвет', category: 'Граница' },
-  { name: 'border-radius', description: 'Скругление углов', example: 'border-radius: 10px;', values: 'Размер', category: 'Граница' },
-  { name: 'outline', description: 'Контур элемента (не влияет на размер)', example: 'outline: 2px solid red;', values: 'Толщина стиль цвет', category: 'Граница' },
-  
-  { name: 'display', description: 'Тип отображения элемента', example: 'display: flex;', values: 'block, inline, flex, grid, none', category: 'Layout' },
-  { name: 'position', description: 'Тип позиционирования', example: 'position: relative;', values: 'static, relative, absolute, fixed, sticky', category: 'Layout' },
-  { name: 'top', description: 'Смещение сверху (для positioned)', example: 'top: 10px;', values: 'Размер', category: 'Layout' },
-  { name: 'right', description: 'Смещение справа (для positioned)', example: 'right: 10px;', values: 'Размер', category: 'Layout' },
-  { name: 'bottom', description: 'Смещение снизу (для positioned)', example: 'bottom: 10px;', values: 'Размер', category: 'Layout' },
-  { name: 'left', description: 'Смещение слева (для positioned)', example: 'left: 10px;', values: 'Размер', category: 'Layout' },
-  { name: 'z-index', description: 'Порядок наложения элементов', example: 'z-index: 10;', values: 'Число', category: 'Layout' },
-  { name: 'float', description: 'Обтекание элемента', example: 'float: left;', values: 'left, right, none', category: 'Layout' },
-  { name: 'clear', description: 'Отмена обтекания', example: 'clear: both;', values: 'left, right, both, none', category: 'Layout' },
-  { name: 'overflow', description: 'Обработка переполнения', example: 'overflow: hidden;', values: 'visible, hidden, scroll, auto', category: 'Layout' },
-  { name: 'visibility', description: 'Видимость элемента', example: 'visibility: hidden;', values: 'visible, hidden', category: 'Layout' },
-  
-  { name: 'flex', description: 'Гибкое распределение (flex-элемент)', example: 'flex: 1;', values: 'grow shrink basis', category: 'Flexbox' },
-  { name: 'flex-direction', description: 'Направление flex-элементов', example: 'flex-direction: row;', values: 'row, column, row-reverse, column-reverse', category: 'Flexbox' },
-  { name: 'flex-wrap', description: 'Перенос flex-элементов', example: 'flex-wrap: wrap;', values: 'nowrap, wrap, wrap-reverse', category: 'Flexbox' },
-  { name: 'justify-content', description: 'Выравнивание по главной оси', example: 'justify-content: center;', values: 'flex-start, center, space-between, space-around', category: 'Flexbox' },
-  { name: 'align-items', description: 'Выравнивание по поперечной оси', example: 'align-items: center;', values: 'flex-start, center, flex-end, stretch', category: 'Flexbox' },
-  { name: 'align-content', description: 'Выравнивание строк flex', example: 'align-content: space-between;', values: 'flex-start, center, space-between', category: 'Flexbox' },
-  { name: 'gap', description: 'Расстояние между элементами', example: 'gap: 20px;', values: 'Размер', category: 'Flexbox' },
-  
-  { name: 'grid-template-columns', description: 'Колонки в Grid', example: 'grid-template-columns: 1fr 1fr 1fr;', values: 'Размеры колонок', category: 'Grid' },
-  { name: 'grid-template-rows', description: 'Строки в Grid', example: 'grid-template-rows: 100px auto;', values: 'Размеры строк', category: 'Grid' },
-  { name: 'grid-gap', description: 'Расстояние между ячейками Grid', example: 'grid-gap: 20px;', values: 'Размер', category: 'Grid' },
-  { name: 'grid-column', description: 'Позиция элемента по колонкам', example: 'grid-column: 1 / 3;', values: 'start / end', category: 'Grid' },
-  { name: 'grid-row', description: 'Позиция элемента по строкам', example: 'grid-row: 1 / 2;', values: 'start / end', category: 'Grid' },
-  
-  { name: 'transition', description: 'Плавный переход свойств', example: 'transition: all 0.3s ease;', values: 'property duration timing-function', category: 'Анимация' },
-  { name: 'transform', description: 'Трансформация элемента', example: 'transform: rotate(45deg);', values: 'rotate, scale, translate, skew', category: 'Анимация' },
-  { name: 'animation', description: 'CSS анимация', example: 'animation: slide 2s infinite;', values: 'name duration timing-function', category: 'Анимация' },
-  { name: 'cursor', description: 'Вид курсора', example: 'cursor: pointer;', values: 'default, pointer, text, move, wait', category: 'Интерфейс' },
-  { name: 'box-shadow', description: 'Тень элемента', example: 'box-shadow: 0 4px 6px rgba(0,0,0,0.1);', values: 'x y blur spread color', category: 'Эффекты' },
-  { name: 'filter', description: 'Фильтры изображения', example: 'filter: blur(5px);', values: 'blur, brightness, contrast, grayscale', category: 'Эффекты' },
-];
-
-const examples = [
-  {
-    title: 'Карточка с кнопкой',
-    html: '<div class="card">\n  <h3>Заголовок</h3>\n  <p>Описание карточки</p>\n  <button>Действие</button>\n</div>',
-    css: '.card {\n  background: #1e1b2e;\n  border: 1px solid #9b87f5;\n  border-radius: 8px;\n  padding: 20px;\n  color: #f0ebff;\n}\n\n.card h3 {\n  margin: 0 0 10px;\n  color: #9b87f5;\n}\n\n.card button {\n  background: #9b87f5;\n  color: #1e1b2e;\n  border: none;\n  padding: 10px 20px;\n  border-radius: 4px;\n  cursor: pointer;\n}'
-  },
-  {
-    title: 'Навигационное меню',
-    html: '<nav>\n  <a href="#home">Главная</a>\n  <a href="#about">О нас</a>\n  <a href="#contact">Контакты</a>\n</nav>',
-    css: 'nav {\n  display: flex;\n  gap: 20px;\n  padding: 15px;\n  background: #1e1b2e;\n  border-bottom: 2px solid #9b87f5;\n}\n\nnav a {\n  color: #f0ebff;\n  text-decoration: none;\n  padding: 8px 16px;\n  border-radius: 4px;\n  transition: background 0.3s;\n}\n\nnav a:hover {\n  background: #9b87f5;\n  color: #1e1b2e;\n}'
-  },
-  {
-    title: 'Форма входа',
-    html: '<form class="login-form">\n  <h2>Вход</h2>\n  <input type="email" placeholder="Email">\n  <input type="password" placeholder="Пароль">\n  <button type="submit">Войти</button>\n</form>',
-    css: '.login-form {\n  max-width: 300px;\n  padding: 30px;\n  background: #1e1b2e;\n  border: 1px solid #9b87f5;\n  border-radius: 12px;\n}\n\n.login-form h2 {\n  margin: 0 0 20px;\n  color: #9b87f5;\n}\n\n.login-form input {\n  width: 100%;\n  padding: 12px;\n  margin-bottom: 15px;\n  background: #2a2640;\n  border: 1px solid #4a4458;\n  border-radius: 6px;\n  color: #f0ebff;\n}\n\n.login-form button {\n  width: 100%;\n  padding: 12px;\n  background: #9b87f5;\n  color: #1e1b2e;\n  border: none;\n  border-radius: 6px;\n  cursor: pointer;\n  font-weight: 600;\n}'
-  }
-];
+import HomePage from '@/components/reference/HomePage';
+import ReferenceSection from '@/components/reference/ReferenceSection';
+import PlaygroundSection from '@/components/reference/PlaygroundSection';
+import { htmlTags, cssProperties, examples } from '@/components/reference/data';
 
 export default function Index() {
   const [activeSection, setActiveSection] = useState('home');
@@ -187,43 +15,6 @@ export default function Index() {
   const [selectedCssCategory, setSelectedCssCategory] = useState('Все');
   const [liveHtml, setLiveHtml] = useState('<div style="padding: 20px; text-align: center;">\n  <h1>Привет, мир!</h1>\n  <p>Редактируй HTML и CSS слева</p>\n</div>');
   const [liveCss, setLiveCss] = useState('body {\n  font-family: Arial, sans-serif;\n}\n\nh1 {\n  color: #9b87f5;\n}\n\np {\n  color: #f0ebff;\n}');
-
-  const htmlCategories = useMemo(() => {
-    const cats = ['Все', ...new Set(htmlTags.map(tag => tag.category))];
-    return cats;
-  }, []);
-
-  const cssCategories = useMemo(() => {
-    const cats = ['Все', ...new Set(cssProperties.map(prop => prop.category))];
-    return cats;
-  }, []);
-
-  const filteredHtmlTags = useMemo(() => {
-    return htmlTags.filter(tag => {
-      const matchesSearch = tag.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tag.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedHtmlCategory === 'Все' || tag.category === selectedHtmlCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, selectedHtmlCategory]);
-
-  const filteredCssProps = useMemo(() => {
-    return cssProperties.filter(prop => {
-      const matchesSearch = prop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prop.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCssCategory === 'Все' || prop.category === selectedCssCategory;
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, selectedCssCategory]);
-
-  const renderPreview = () => {
-    return (
-      <div className="h-full bg-white rounded-lg overflow-hidden">
-        <style>{liveCss}</style>
-        <div dangerouslySetInnerHTML={{ __html: liveHtml }} />
-      </div>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -277,184 +68,30 @@ export default function Index() {
 
       <main className="container mx-auto px-6 py-8">
         {activeSection === 'home' && (
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="text-center space-y-4 py-12">
-              <h2 className="text-5xl font-bold text-foreground">Полный справочник по HTML и CSS</h2>
-              <p className="text-xl text-muted-foreground">
-                Изучай, экспериментируй и создавай с интерактивными примерами
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="p-6 hover:border-primary transition-colors cursor-pointer" onClick={() => setActiveSection('html')}>
-                <div className="flex flex-col items-center text-center gap-4">
-                  <div className="p-4 bg-primary/10 rounded-full">
-                    <Icon name="FileCode" size={40} className="text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold">HTML-теги</h3>
-                  <p className="text-muted-foreground">
-                    {htmlTags.length} HTML-тегов с описаниями и примерами
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6 hover:border-primary transition-colors cursor-pointer" onClick={() => setActiveSection('css')}>
-                <div className="flex flex-col items-center text-center gap-4">
-                  <div className="p-4 bg-primary/10 rounded-full">
-                    <Icon name="Palette" size={40} className="text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold">CSS-свойства</h3>
-                  <p className="text-muted-foreground">
-                    {cssProperties.length} CSS-свойств для стилизации
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6 hover:border-primary transition-colors cursor-pointer" onClick={() => setActiveSection('playground')}>
-                <div className="flex flex-col items-center text-center gap-4">
-                  <div className="p-4 bg-primary/10 rounded-full">
-                    <Icon name="Play" size={40} className="text-primary" />
-                  </div>
-                  <h3 className="text-xl font-semibold">Песочница</h3>
-                  <p className="text-muted-foreground">
-                    Пиши код и смотри результат в реальном времени
-                  </p>
-                </div>
-              </Card>
-            </div>
-
-            <Card className="p-8 bg-gradient-to-br from-primary/20 to-secondary/20 border-primary/50">
-              <div className="flex items-start gap-4">
-                <Icon name="BookOpen" size={32} className="text-primary flex-shrink-0" />
-                <div>
-                  <h3 className="text-2xl font-semibold mb-2">Справка для начинающих</h3>
-                  <p className="text-foreground/80 mb-4">
-                    HTML — это язык разметки, который определяет структуру веб-страницы. 
-                    CSS — это язык стилей, который определяет внешний вид элементов.
-                  </p>
-                  <ul className="space-y-2 text-foreground/80">
-                    <li className="flex items-start gap-2">
-                      <Icon name="CheckCircle2" size={20} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span>HTML теги создают структуру: заголовки, параграфы, ссылки, изображения</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon name="CheckCircle2" size={20} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span>CSS свойства стилизуют элементы: цвета, размеры, отступы, анимации</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon name="CheckCircle2" size={20} className="text-primary flex-shrink-0 mt-0.5" />
-                      <span>Используйте песочницу для экспериментов и практики</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          </div>
+          <HomePage onNavigate={setActiveSection} />
         )}
 
         {activeSection === 'html' && (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold">HTML-теги</h2>
-                <p className="text-muted-foreground mt-1">Найдено: {filteredHtmlTags.length} из {htmlTags.length}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Input
-                  placeholder="Поиск тегов..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-80"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {htmlCategories.map(cat => (
-                <Badge
-                  key={cat}
-                  variant={selectedHtmlCategory === cat ? 'default' : 'outline'}
-                  className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedHtmlCategory(cat)}
-                >
-                  {cat}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {filteredHtmlTags.map((tag) => (
-                <Card key={tag.name} className="p-6 hover:border-primary transition-colors">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <code className="text-xl font-bold text-primary">{tag.name}</code>
-                      <Badge variant="secondary">{tag.category}</Badge>
-                    </div>
-                    <p className="text-muted-foreground">{tag.description}</p>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-sm text-foreground overflow-x-auto">
-                        <code>{tag.example}</code>
-                      </pre>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <ReferenceSection
+            title="HTML-теги"
+            items={htmlTags}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedHtmlCategory}
+            onCategoryChange={setSelectedHtmlCategory}
+          />
         )}
 
         {activeSection === 'css' && (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold">CSS-свойства</h2>
-                <p className="text-muted-foreground mt-1">Найдено: {filteredCssProps.length} из {cssProperties.length}</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Input
-                  placeholder="Поиск свойств..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full sm:w-80"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {cssCategories.map(cat => (
-                <Badge
-                  key={cat}
-                  variant={selectedCssCategory === cat ? 'default' : 'outline'}
-                  className="cursor-pointer px-4 py-2 text-sm"
-                  onClick={() => setSelectedCssCategory(cat)}
-                >
-                  {cat}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              {filteredCssProps.map((prop) => (
-                <Card key={prop.name} className="p-6 hover:border-primary transition-colors">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <code className="text-xl font-bold text-primary">{prop.name}</code>
-                      <Badge variant="secondary">{prop.category}</Badge>
-                    </div>
-                    <p className="text-muted-foreground">{prop.description}</p>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-sm text-foreground overflow-x-auto">
-                        <code>{prop.example}</code>
-                      </pre>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <span className="font-semibold">Значения:</span> {prop.values}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <ReferenceSection
+            title="CSS-свойства"
+            items={cssProperties}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCssCategory}
+            onCategoryChange={setSelectedCssCategory}
+            showValues={true}
+          />
         )}
 
         {activeSection === 'examples' && (
@@ -498,55 +135,12 @@ export default function Index() {
         )}
 
         {activeSection === 'playground' && (
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Интерактивная песочница</h2>
-            <p className="text-muted-foreground">Пиши код и сразу смотри результат</p>
-            
-            <div className="grid lg:grid-cols-2 gap-4 h-[calc(100vh-240px)]">
-              <div className="space-y-4">
-                <Card className="p-4 h-full flex flex-col">
-                  <Tabs defaultValue="html" className="flex-1 flex flex-col">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="html">HTML</TabsTrigger>
-                      <TabsTrigger value="css">CSS</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="html" className="flex-1 mt-4">
-                      <ScrollArea className="h-[calc(100vh-360px)]">
-                        <textarea
-                          value={liveHtml}
-                          onChange={(e) => setLiveHtml(e.target.value)}
-                          className="w-full h-full min-h-[500px] bg-muted text-foreground p-4 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                          spellCheck={false}
-                        />
-                      </ScrollArea>
-                    </TabsContent>
-                    <TabsContent value="css" className="flex-1 mt-4">
-                      <ScrollArea className="h-[calc(100vh-360px)]">
-                        <textarea
-                          value={liveCss}
-                          onChange={(e) => setLiveCss(e.target.value)}
-                          className="w-full h-full min-h-[500px] bg-muted text-foreground p-4 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-                          spellCheck={false}
-                        />
-                      </ScrollArea>
-                    </TabsContent>
-                  </Tabs>
-                </Card>
-              </div>
-
-              <Card className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Icon name="Eye" size={20} />
-                    Предпросмотр
-                  </h3>
-                </div>
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  {renderPreview()}
-                </ScrollArea>
-              </Card>
-            </div>
-          </div>
+          <PlaygroundSection
+            liveHtml={liveHtml}
+            liveCss={liveCss}
+            onHtmlChange={setLiveHtml}
+            onCssChange={setLiveCss}
+          />
         )}
       </main>
     </div>
